@@ -250,15 +250,19 @@ class BorutaShap:
             self.model.fit(X, y, sample_weight = sample_weight, cat_features = self.X_categorical,  verbose=False)
 
         elif 'lightgbm' in str(type(self.model)).lower():
-            if model.boosting_type == 'rf':
+            if self.model.boosting == 'rf':
+                print("here")
                 # Borrow the n_estimator calculated in the Boruta-py package. 
                 # We do this so that boruta-shap handles categorical variables better.
+                    
                 not_rejected = self.X.shape[1]
                 n_tree = self._get_tree_num(not_rejected)
-                self.model.set_params(random_state=self.random_state.randint(0, 10000))
+                self.model.set_params(random_state=np.random.randint(0, 10000))
                 self.model.set_params(n_estimators=n_tree)
+                
+            print(self.model.n_estimators,self.model.boosting)
 
-            self.model.fit(X, y, sample_weight = sample_weight, cat_features = self.X_categorical,  verbose=False)
+            self.model.fit(X, y, sample_weight = sample_weight)
 
         else:
             try:
@@ -276,6 +280,8 @@ class BorutaShap:
                 "The estimator does not have a max_depth property, as a result "
                 " the number of trees to use cannot be estimated automatically."
             )
+        if depth < 0:
+            depth = 10
         if depth == None:
             depth = 10
         # how many times a feature should be considered on average
