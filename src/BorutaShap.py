@@ -249,15 +249,41 @@ class BorutaShap:
         if 'catboost' in str(type(self.model)).lower():
             self.model.fit(X, y, sample_weight = sample_weight, cat_features = self.X_categorical,  verbose=False)
 
-        else:
+        elif 'lightgbm' in str(type(self.model)).lower():
+            if model.boosting_type == 'rf':
+                # Borrow the n_estimator calculated in the Boruta-py package. 
+                # We do this so that boruta-shap handles categorical variables better.
+                not_rejected = self.X.shape[1]
+                n_tree = self._get_tree_num(not_rejected)
+                self.model.set_params(random_state=self.random_state.randint(0, 10000))
+                self.model.set_params(n_estimators=n_tree)
 
+            self.model.fit(X, y, sample_weight = sample_weight, cat_features = self.X_categorical,  verbose=False)
+
+        else:
             try:
                 self.model.fit(X, y, sample_weight = sample_weight, verbose=False)
 
             except:
                 self.model.fit(X, y, sample_weight = sample_weight)
 
-
+    def _get_tree_num(self, n_feat):
+        depth = None
+        try:
+            depth = self.model.get_params()['max_depth']
+        except KeyError:
+            warnings.warn(
+                "The estimator does not have a max_depth property, as a result "
+                " the number of trees to use cannot be estimated automatically."
+            )
+        if depth == None:
+            depth = 10
+        # how many times a feature should be considered on average
+        f_repr = 100
+        # n_feat * 2 because the training matrix is extended with n shadow features
+        multi = ((n_feat * 2) / (np.sqrt(n_feat * 2) * depth))
+        n_estimators = int(multi * f_repr)
+        return n_estimators
 
 
     def fit(self, X, y, sample_weight = None, n_trials = 20, random_state=0, sample=False,
