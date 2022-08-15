@@ -29,7 +29,7 @@ class BorutaShap:
     """
 
     def __init__(self, model=None, importance_measure='Shap',
-                classification=True, percentile=100, pvalue=0.05):
+                classification=True, percentile=100, pvalue=0.05, test_frac = .3):
 
         """
         Parameters
@@ -53,6 +53,9 @@ class BorutaShap:
             would make it more strict also by making the model more strict could impact runtime making it slower. As it will be less likley
             to reject and accept features.
 
+        test_frac: float
+            Represents size of test split. This might make evaluating evaluating SHAP faster.
+
         """
 
         self.importance_measure = importance_measure.lower()
@@ -60,6 +63,7 @@ class BorutaShap:
         self.pvalue = pvalue
         self.classification = classification
         self.model = model
+        self.test_frac = test_frac
         self.check_model()
 
 
@@ -209,7 +213,7 @@ class BorutaShap:
             self.X_boruta_train, self.X_boruta_test, self.y_train, self.y_test, self.w_train, self.w_test = train_test_split(self.X_boruta,
                                                                                                                                 self.y,
                                                                                                                                 self.sample_weight,
-                                                                                                                                test_size=0.3,
+                                                                                                                                test_size=self.test_frac,
                                                                                                                                 random_state=self.random_state,
                                                                                                                                 stratify=self.stratify)
             self.Train_model(self.X_boruta_train, self.y_train, sample_weight = self.w_train)
